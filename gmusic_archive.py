@@ -77,29 +77,29 @@ def get_songs(db_name, debug):
     session = Session()
     for gmusic_song in downloaded:
         song = Song(
-                play_id=gmusic_song['id'],
-                title=gmusic_song['title'],
-                album=gmusic_song['album'],
-                album_artist=gmusic_song['album_artist'],
-                artist=gmusic_song['artist'],
-                track_number=gmusic_song['track_number'],
-                track_size=gmusic_song['track_size'],
-                disc_number=gmusic_song['disc_number'],
-                total_disc_count=gmusic_song['total_disc_count'],
-                )
+            play_id=gmusic_song['id'],
+            title=gmusic_song['title'],
+            album=gmusic_song['album'],
+            album_artist=gmusic_song['album_artist'],
+            artist=gmusic_song['artist'],
+            track_number=gmusic_song['track_number'],
+            track_size=gmusic_song['track_size'],
+            disc_number=gmusic_song['disc_number'],
+            total_disc_count=gmusic_song['total_disc_count'],
+            )
         session.add(song)
     for gmusic_song in purchased:
         song = Song(
-                play_id=gmusic_song['id'],
-                title=gmusic_song['title'],
-                album=gmusic_song['album'],
-                album_artist=gmusic_song['album_artist'],
-                artist=gmusic_song['artist'],
-                track_number=gmusic_song['track_number'],
-                track_size=gmusic_song['track_size'],
-                disc_number=gmusic_song['disc_number'],
-                total_disc_count=gmusic_song['total_disc_count'],
-                )
+            play_id=gmusic_song['id'],
+            title=gmusic_song['title'],
+            album=gmusic_song['album'],
+            album_artist=gmusic_song['album_artist'],
+            artist=gmusic_song['artist'],
+            track_number=gmusic_song['track_number'],
+            track_size=gmusic_song['track_size'],
+            disc_number=gmusic_song['disc_number'],
+            total_disc_count=gmusic_song['total_disc_count'],
+            )
         session.add(song)
 
     session.commit()
