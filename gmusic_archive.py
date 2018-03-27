@@ -4,8 +4,8 @@
 Download all of my music from Google Play Music.
 """
 
-# TODO: generate metadata
-
+import json
+import math
 import os
 import random
 import re
@@ -48,18 +48,20 @@ class Song(Base):
 @click.pass_context
 def cli(ctx, db_name, debug):
     ctx.obj = {}
-
     ctx.obj['DB_NAME'] = db_name
     ctx.obj['DEBUG'] = debug
+    ctx.obj['DB_URI'] = open_db(db_name)
 
+
+def open_db(db_name, debug=False):
+    """Opens the database and returns the URI."""
     db_uri = 'sqlite:///' + db_name
     create = not os.path.exists(db_name)
     engine = create_engine(db_uri, echo=debug)
     Session.configure(bind=engine)
     if create:
         Base.metadata.create_all(engine)
-
-    ctx.obj['DB_URI'] = db_uri
+    return db_uri
 
 
 @cli.command()
@@ -192,10 +194,17 @@ def archive(ctx, output_dir, delay):
 
 
 @cli.command()
-# @click.pass_context
-def save_metadata():
+@click.option('-o', '--output', type=click.File('w'),
+              help='Write the database as metadata.')
+def save_metadata(output):
     """Save the metadata in a YAML file beside every song."""
-    raise NotImplemented()
+    session = Session()
+    songs = []
+    for song in session.query(Song).all():
+        song = song.__dict__
+        song.pop('_sa_instance_state', None)
+        songs.append(song)
+    json.dump(songs, output, indent=4)
 
 
 def normalize_path(inp):
