@@ -7,6 +7,7 @@ Download all of my music from Google Play Music.
 # TODO: generate metadata
 
 import os
+import random
 import re
 import time
 
@@ -139,10 +140,14 @@ def info():
 @click.option('-o', '--output-dir', default='./archive',
               type=click.Path(file_okay=False, dir_okay=True),
               help='The directory to put the songs into.')
+@click.option('--delay', default=60, type=int,
+              help='The delay between downloads in seconds. '
+                   'Default is 60.')
 @click.pass_context
-def archive(ctx, output_dir):
+def archive(ctx, output_dir, delay):
     """Download songs."""
     debug = ctx.obj['DEBUG']
+    delay_range = math.floor(delay * 0.1)
     music = Musicmanager(debug_logging=debug)
     music.login()
 
@@ -151,7 +156,7 @@ def archive(ctx, output_dir):
     count = 0
     while True:
         if count:
-            time.sleep(60)
+            time.sleep(delay + (random.randrange(-delay_range, delay_range)))
 
         current = session.query(Song).filter(
             Song.file_location == None
