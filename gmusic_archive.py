@@ -177,7 +177,7 @@ def archive(ctx, output_dir, delay):
             parts = [part for part in parts if part is not None]
 
             output = os.path.join(output_dir, *parts)
-            os.makedirs(output)
+            os.makedirs(output, exist_ok=True)
 
             output = os.path.join(output, filename)
 
