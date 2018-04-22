@@ -204,7 +204,7 @@ def archive(ctx, output_dir, delay):
 @click.option('-o', '--output', type=click.File('w'),
               help='Write the database as metadata.')
 def save_metadata(output):
-    """Save the metadata in a YAML file beside every song."""
+    """Save the metadata into a JSON file."""
     session = Session()
     songs = []
     for song in session.query(Song).all():
