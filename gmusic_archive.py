@@ -4,9 +4,11 @@
 Download all of my music from Google Play Music.
 """
 
+import datetime
 import json
 import math
 import os
+from pathlib import Path, PurePath
 import random
 import re
 import time
@@ -166,7 +168,12 @@ def archive(ctx, output_dir, delay):
         save_filename(session, current, '*')
 
         count += 1
-        print('{:4}. {} / {}'.format(count, current.artist, current.title), end='')
+        now = datetime.datetime.now()
+        print('[{}] {} / {}'.format(
+            now.isoformat(),
+            current.artist,
+            current.title
+            ), end='')
         try:
             (filename, song_data) = music.download_song(current.play_id)
             parts = [
@@ -174,7 +181,7 @@ def archive(ctx, output_dir, delay):
                 normalize_path(current.album),
                 normalize_path(current.title),
                 ]
-            parts = [part for part in parts if part is not None]
+            parts = [part[:20] for part in parts if part is not None]
 
             output = os.path.join(output_dir, *parts)
             os.makedirs(output, exist_ok=True)
@@ -205,6 +212,44 @@ def save_metadata(output):
         song.pop('_sa_instance_state', None)
         songs.append(song)
     json.dump(songs, output, indent=4)
+
+
+@cli.command()
+@click.pass_context
+def collapse_tree(ctx):
+    """This hoists songs up out of their immediate parent directory.
+
+    For example, it changes `a/b/c` into `a/c`.
+
+    Originally, the archived each song into its own directory. This grops
+    them better.
+    """
+    debug = ctx.obj['DEBUG']
+    session = Session()
+    count = 0
+    for song in session.query(Song).all():
+        src = Path(song.file_location)
+
+        src_parts = list(src.parts)
+        del src_parts[-2]
+        dest = Path(*src_parts)
+
+        if debug:
+            print('mv {} => {}'.format(src, dest))
+
+        if src.exists() and not dest.exists():
+            src.rename(dest)
+        if src.parent.exists() and not list(src.parent.iterdir()):
+            src.parent.rmdir()
+
+        song.file_location = str(dest)
+        session.add(song)
+
+        count += 1
+
+    if debug:
+        print('{} files moved'.format(count))
+    session.commit()
 
 
 def normalize_path(inp):
