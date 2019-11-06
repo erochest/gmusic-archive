@@ -1,0 +1,41 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+appdirs = "*"
+beautifulsoup4 = "*"
+certifi = "*"
+chardet = "*"
+click = "*"
+decorator = "*"
+future = "*"
+gmusic-archive = {editable = true,path = "."}
+gmusicapi = "*"
+gpsoauth = "*"
+httplib2 = "*"
+idna = "*"
+lxml = "*"
+mock = "*"
+mutagen = "*"
+oauth2client = "*"
+pbr = "*"
+proboscis = "*"
+protobuf = "*"
+pyasn1 = "*"
+pyasn1-modules = "*"
+pycryptodomex = "*"
+python-dateutil = "*"
+requests = "*"
+rsa = "*"
+six = "*"
+urllib3 = "*"
+validictory = "*"
+MechanicalSoup = "*"
+SQLAlchemy = "*"
+
+[requires]
+python_version = "3.7"
