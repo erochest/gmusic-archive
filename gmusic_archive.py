@@ -165,6 +165,8 @@ def archive(ctx, output_dir, delay):
         current = session.query(Song).filter(
             Song.file_location == None
             ).first()
+        if current is None:
+            break
         save_filename(session, current, '*')
 
         count += 1
