@@ -46,6 +46,8 @@ class Song(Base):
     track_size = Column(String)
     disc_number = Column(String)
     total_disc_count = Column(String)
+    rating = Column(Integer, nullable=True)
+    # rating = null = no rating, 1 = thumb down, 5 = thumb up
 
     file_location = Column(String, nullable=True)
 
@@ -258,6 +260,36 @@ def playlists(ctx, login):
                 ]
 
         session.add(db_playlist)
+
+    session.commit()
+
+
+@cli.command()
+@click.option('-l', '--login', is_flag=True, default=False, help='If you need to login, set this flag.')
+@click.pass_context
+def favorites(ctx, login):
+    """Download favorite information and include it in the database."""
+    debug = ctx.obj['DEBUG']
+
+    music = Mobileclient(debug_logging=debug)
+    if login:
+        music.perform_oauth()
+        return
+    else:
+        music.oauth_login(device_id=Mobileclient.FROM_MAC_ADDRESS)
+
+    session = Session()
+    song_index = {song.play_id: song for song in session.query(Song).all()}
+    songs = music.get_all_songs()
+
+    for song in songs:
+        rating = int(song['rating'])
+        if rating == 0:
+            continue
+
+        db_song = song_index[song['id']]
+        db_song.rating = rating
+        session.add(db_song)
 
     session.commit()
 
