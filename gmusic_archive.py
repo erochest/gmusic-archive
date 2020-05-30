@@ -14,14 +14,22 @@ import re
 import time
 
 import click
-from gmusicapi import Musicmanager
-from sqlalchemy import (create_engine, Column, Integer, String)
+from gmusicapi import Mobileclient, Musicmanager
+from sqlalchemy import (create_engine, Column, ForeignKey, Integer, String, Table)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker
 
 
 Base = declarative_base()
 Session = sessionmaker()
+
+
+playlist_song_table = Table(
+        'playlist_song',
+        Base.metadata,
+        Column('song_id', Integer, ForeignKey('songs.id')),
+        Column('playlist_id', Integer, ForeignKey('playlists.id')),
+        )
 
 
 class Song(Base):
@@ -42,6 +50,20 @@ class Song(Base):
     file_location = Column(String, nullable=True)
 
 
+class Playlist(Base):
+    __tablename__ = 'playlists'
+
+    id = Column(Integer, primary_key=True)
+
+    name = Column(String, nullable=False)
+    google_id = Column(String, nullable=False)
+
+    songs = relationship(
+            'Song',
+            secondary=playlist_song_table,
+            )
+
+
 @click.group()
 @click.option('-D', '--db-name', default='gmusic-archive.db',
               help='The database to use for queuing the songs.')
@@ -58,11 +80,9 @@ def cli(ctx, db_name, debug):
 def open_db(db_name, debug=False):
     """Opens the database and returns the URI."""
     db_uri = 'sqlite:///' + db_name
-    create = not os.path.exists(db_name)
     engine = create_engine(db_uri, echo=debug)
     Session.configure(bind=engine)
-    if create:
-        Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     return db_uri
 
 
@@ -200,6 +220,46 @@ def archive(ctx, output_dir, delay):
             raise
 
         save_filename(session, current, output)
+
+
+@cli.command()
+@click.option('-l', '--login', is_flag=True, default=False, help='If you need to login, set this flag.')
+@click.pass_context
+def playlists(ctx, login):
+    """Download playlists."""
+    debug = ctx.obj['DEBUG']
+
+    music = Mobileclient(debug_logging=debug)
+    if login:
+        music.perform_oauth()
+        return
+    else:
+        music.oauth_login(device_id=Mobileclient.FROM_MAC_ADDRESS)
+    playlists = music.get_all_user_playlist_contents()
+
+    session = Session()
+    song_index = {song.play_id: song for song in session.query(Song).all()}
+
+    for playlist in playlists:
+        tracks = playlist.get('tracks')
+        if not tracks:
+            if debug:
+                print('skipping playlist "{}"'.format(playlist['name'])) 
+            continue
+
+        db_playlist = Playlist(
+                name=playlist['name'],
+                google_id=playlist['id'],
+                )
+        db_playlist.songs = [
+                song_index[t['trackId']]
+                for t in tracks
+                if t['trackId'] in song_index
+                ]
+
+        session.add(db_playlist)
+
+    session.commit()
 
 
 @cli.command()
